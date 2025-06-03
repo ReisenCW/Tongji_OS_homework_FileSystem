@@ -2,6 +2,7 @@
 #include <sstream>
 #include <vector>
 #include <fstream>
+#include <QDir>
 
 // 定义并初始化全局的 config 变量
 Config config;
@@ -64,7 +65,8 @@ int allocateBlock() {
 
 // 保存索引节点信息到磁盘
 void saveInode(const std::string& path, const Inode& inode) {
-    std::string inodePath = getFullPath(path) + ".inode";
+    std::string inodePath = config.realRootPath + "/inode/" + getFullPath(path).substr(config.realRootPath.length()) + ".inode";
+    QDir().mkpath(QFileInfo(QString::fromStdString(inodePath)).absolutePath());
     std::ofstream inodeFile(inodePath, std::ios::binary);
     if (inodeFile) {
         inodeFile.write(reinterpret_cast<const char*>(&inode), sizeof(Inode));
@@ -75,7 +77,7 @@ void saveInode(const std::string& path, const Inode& inode) {
 // 从磁盘加载索引节点信息
 Inode loadInode(const std::string& path) {
     Inode inode;
-    std::string inodePath = getFullPath(path) + ".inode";
+    std::string inodePath = config.realRootPath + "/inode/" + getFullPath(path).substr(config.realRootPath.length()) + ".inode";
     std::ifstream inodeFile(inodePath, std::ios::binary);
     if (inodeFile) {
         inodeFile.read(reinterpret_cast<char*>(&inode), sizeof(Inode));

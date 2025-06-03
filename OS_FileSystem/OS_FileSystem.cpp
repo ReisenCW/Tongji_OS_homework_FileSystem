@@ -23,6 +23,12 @@ void OS_FileSystem::Init()
     this->resize(600, 400);
     // 初始化界面
     InitWidget();
+
+    // 创建 inode 文件夹
+    QDir inodeDir(QString::fromStdString(config.realRootPath + "/inode"));
+    if (!inodeDir.exists()) {
+        inodeDir.mkpath(".");
+    }
 }
 
 void OS_FileSystem::InitWidget()
