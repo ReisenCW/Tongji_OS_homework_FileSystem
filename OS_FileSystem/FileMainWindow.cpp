@@ -90,6 +90,7 @@ void FileMainWindow::InitWidget()
 
     QPushButton* mkdirButton = new QPushButton("创建文件夹", centralWidget);
     QPushButton* touchButton = new QPushButton("创建文件", centralWidget);
+	QPushButton* cdButton = new QPushButton("切换路径", centralWidget);
     QPushButton* rmButton = new QPushButton("删除", centralWidget);
     QPushButton* writeButton = new QPushButton("编辑文件", centralWidget);
     QPushButton* readButton = new QPushButton("读文件", centralWidget);
@@ -102,6 +103,9 @@ void FileMainWindow::InitWidget()
     connect(touchButton, &QPushButton::clicked, [=]() {
         commandInput->setText("touch new_file");
     });
+	connect(cdButton, &QPushButton::clicked, [=]() {
+		commandInput->setText("cd file_path");
+	});
     connect(rmButton, &QPushButton::clicked, [=]() {
         commandInput->setText("rm file_to_delete");
     });
@@ -120,6 +124,7 @@ void FileMainWindow::InitWidget()
 
     shortcutButtonLayout->addWidget(mkdirButton);
     shortcutButtonLayout->addWidget(touchButton);
+	shortcutButtonLayout->addWidget(cdButton);
     shortcutButtonLayout->addWidget(rmButton);
     shortcutButtonLayout->addWidget(writeButton);
     shortcutButtonLayout->addWidget(readButton);
