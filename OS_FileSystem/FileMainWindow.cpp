@@ -64,7 +64,7 @@ void FileMainWindow::InitWidget()
 
     // 右侧文件列表
     QTreeWidget* fileList = new QTreeWidget(centralWidget);
-    fileList->setHeaderLabels(QStringList() << "名称" << "类型" << "大小" << "创建时间" << "修改时间");
+    fileList->setHeaderLabels(QStringList() << "名称" << "类型" << "大小(Byte)" << "创建时间" << "修改时间");
     fileList->setObjectName("fileList");
     rightLayout->addWidget(fileList);
 

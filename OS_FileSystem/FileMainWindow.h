@@ -33,5 +33,5 @@ private:
     void handleCommand(const std::string& command);
     QLineEdit* currentPathEdit; // 当前路径显示框
     QLineEdit* commandInput; // 命令输入框
-    QFileSystemWatcher* fileSystemWatcher; // 新增成员变量
+    QFileSystemWatcher* fileSystemWatcher;
 };

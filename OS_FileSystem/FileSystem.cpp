@@ -38,7 +38,26 @@ bool createDirectory(const std::string& path) {
 bool createFile(const std::string& path) {
     std::string fullPath = getFullPath(path);
     QFile file(QString::fromStdString(fullPath));
-    return file.open(QIODevice::WriteOnly);
+    if (file.open(QIODevice::WriteOnly)) {
+        // 分配物理块
+        int block = allocateBlock();
+        if (block != -1) {
+            // 更新位图
+            bitmap.set(block);
+            // 更新 FAT 表
+            fat[block] = -1;
+            // 保存文件信息
+            Inode inode;
+            inode.firstBlock = block;
+            inode.size = 0;
+            inode.createTime = QDateTime::currentDateTime();
+            inode.modifyTime = inode.createTime;
+            saveInode(path, inode);
+            return true;
+        }
+        file.close();
+    }
+    return false;
 }
 
 // 删除文件/目录
@@ -51,8 +70,22 @@ bool deleteItem(const std::string& path) {
     }
     else {
         QFile file(QString::fromStdString(fullPath));
-        return file.remove();
+        if (file.remove()) {
+            // 释放物理块
+            Inode inode = loadInode(path);
+            int block = inode.firstBlock;
+            while (block != -1) {
+                int nextBlock = fat[block];
+                // 更新位图
+                bitmap.reset(block);
+                // 更新 FAT 表
+                fat[block] = -1;
+                block = nextBlock;
+            }
+            return true;
+        }
     }
+    return false;
 }
 
 // 获取目录信息
@@ -72,7 +105,6 @@ Directory getDirectoryInfo(const std::string& path) {
             item.size = fileInfo.size();
             item.createTime = fileInfo.birthTime();
             item.modifyTime = fileInfo.lastModified();
-            // 这里暂时不处理inode
             item.inode = -1;
             dirInfo.items.push_back(item);
         }
@@ -85,7 +117,6 @@ bool openFileForEdit(const std::string& path) {
     std::string fullPath = getFullPath(path);
     QFile file(QString::fromStdString(fullPath));
     if (file.open(QIODevice::ReadWrite | QIODevice::Text)) {
-        // 这里可以添加打开文件编辑器的逻辑，例如使用系统默认编辑器打开
         std::string command = "notepad.exe \"" + fullPath + "\""; // 适用于 Windows 系统
         int result = std::system(command.c_str());
         file.close();
@@ -106,3 +137,4 @@ std::string readFileContent(const std::string& path) {
     }
     return "";
 }
+

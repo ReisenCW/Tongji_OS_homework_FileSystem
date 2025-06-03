@@ -26,3 +26,4 @@ bool openFileForEdit(const std::string& path);
 
 // 读取文件内容
 std::string readFileContent(const std::string& path);
+

@@ -1,6 +1,7 @@
 ﻿#include "Utilities.h"
 #include <sstream>
 #include <vector>
+#include <fstream>
 
 // 定义并初始化全局的 config 变量
 Config config;
@@ -27,7 +28,7 @@ std::string getFullPath(const std::string& relativePath) {
     return actualPath;
 }
 
-std::string simplifyPath(const std::string & path) {
+std::string simplifyPath(const std::string& path) {
     std::vector<std::string> stack;
     std::istringstream iss(path);
     std::string part;
@@ -49,4 +50,36 @@ std::string simplifyPath(const std::string & path) {
     }
 
     return simplifiedPath.empty() ? "/" : simplifiedPath;
+}
+
+// 分配一个空闲块
+int allocateBlock() {
+    for (int i = 0; i < BLOCK_COUNT; ++i) {
+        if (!bitmap.test(i)) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+// 保存索引节点信息到磁盘
+void saveInode(const std::string& path, const Inode& inode) {
+    std::string inodePath = getFullPath(path) + ".inode";
+    std::ofstream inodeFile(inodePath, std::ios::binary);
+    if (inodeFile) {
+        inodeFile.write(reinterpret_cast<const char*>(&inode), sizeof(Inode));
+        inodeFile.close();
+    }
+}
+
+// 从磁盘加载索引节点信息
+Inode loadInode(const std::string& path) {
+    Inode inode;
+    std::string inodePath = getFullPath(path) + ".inode";
+    std::ifstream inodeFile(inodePath, std::ios::binary);
+    if (inodeFile) {
+        inodeFile.read(reinterpret_cast<char*>(&inode), sizeof(Inode));
+        inodeFile.close();
+    }
+    return inode;
 }

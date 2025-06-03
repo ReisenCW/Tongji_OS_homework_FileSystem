@@ -61,3 +61,12 @@ std::string getFullPath(const std::string& relativePath);
 
 // 辅助函数：简化路径
 std::string simplifyPath(const std::string& path);
+
+// 分配一个空闲块
+int allocateBlock();
+
+// 保存索引节点信息到磁盘
+void saveInode(const std::string& path, const Inode& inode);
+
+// 从磁盘加载索引节点信息
+Inode loadInode(const std::string& path);
