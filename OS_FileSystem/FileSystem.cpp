@@ -39,33 +39,25 @@ bool createFile(const std::string& path) {
     std::string fullPath = getFullPath(path);
     QFile file(QString::fromStdString(fullPath));
     if (file.open(QIODevice::WriteOnly)) {
-        // 分配物理块
         int block = allocateBlock();
         if (block != -1) {
-            // 更新位图
             bitmap.set(block);
-            if (block < fat.size()) { // 额外检查 vector 边界
+            if (block < fat.size()) {
                 fat[block] = -1;
-            }
-            else {
+            } else {
                 std::cerr << "FAT table out of range for block: " << block << std::endl;
                 file.close();
                 return false;
             }
-            // 保存 inode...
             Inode inode;
             inode.firstBlock = block;
-            inode.size = 0;
+            inode.size = 0; // 初始大小为 0
             inode.createTime = QDateTime::currentDateTime();
             inode.modifyTime = inode.createTime;
             saveInode(path, inode);
             return true;
         }
-    }
-    else {
-        std::cerr << "No free blocks available" << std::endl;
         file.close();
-        return false; // 明确处理无块情况
     }
     return false;
 }
@@ -163,14 +155,12 @@ bool renameItem(const std::string& oldPath, const std::string& newPath) {
     QFile file(QString::fromStdString(oldFullPath));
     if (file.rename(QString::fromStdString(newFullPath))) {
         // 重命名inode文件
-        std::string oldInodePath = oldFullPath + ".inode";
-        std::string newInodePath = newFullPath + ".inode";
+        std::string oldInodePath = config.realRootPath + "/inode/" + getFullPath(oldPath).substr(config.realRootPath.length()) + ".inode";
+        std::string newInodePath = config.realRootPath + "/inode/" + getFullPath(newPath).substr(config.realRootPath.length()) + ".inode";
         QFile inodeFile(QString::fromStdString(oldInodePath));
-        //if (inodeFile.rename(QString::fromStdString(newInodePath))) {
-        //    return true;
-        //}
-        return true;
+        if (inodeFile.rename(QString::fromStdString(newInodePath))) {
+            return true;
+        }
     }
     return false;
 }
-

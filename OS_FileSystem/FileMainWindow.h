@@ -7,6 +7,7 @@
 #include <QFileSystemWatcher> 
 #include "ui_FileMainWindow.h"
 #include "Utilities.h"
+#include <string>
 
 class FileMainWindow : public QMainWindow
 {
@@ -21,7 +22,7 @@ private slots:
     void on_exitButton_clicked();
     void on_commandInput_returnPressed();
     void onDirectoryChanged(const QString& path);
-
+    bool writeFileContent(const std::string& path, const std::string& content);
 private:
     Ui::FileMainWindowClass ui;
     void Init();

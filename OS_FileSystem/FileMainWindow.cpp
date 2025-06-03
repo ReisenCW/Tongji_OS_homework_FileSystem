@@ -7,7 +7,6 @@
 #include <QTextEdit>
 #include <QInputDialog>
 #include <FileSystem.h>
-#include <string>
 #include <sstream>
 #include "FileContentView.h"
 
@@ -243,8 +242,6 @@ void FileMainWindow::on_commandInput_returnPressed() {
 }
 
 void FileMainWindow::handleCommand(const std::string& command) {
-    // debug
-    qDebug() << "Received command:" << QString::fromStdString(command);
     std::vector<std::string> tokens;
     std::string token;
     std::istringstream tokenStream(command);
@@ -398,27 +395,6 @@ void FileMainWindow::handleCommand(const std::string& command) {
             QMessageBox::warning(this, "错误", "缺少文件/目录名参数");
         }
     }
-    else if (tokens[0] == "write") {
-        if (tokens.size() > 1) {
-            std::string relativePath = tokens[1];
-            std::string fullVirtualPath;
-            if (relativePath[0] == '/') {
-                fullVirtualPath = relativePath;
-            }
-            else {
-                if (config.currentPath.back() == '/') {
-                    fullVirtualPath = config.currentPath + relativePath;
-                }
-                else {
-                    fullVirtualPath = config.currentPath + "/" + relativePath;
-                }
-            }
-            openFileForEdit(fullVirtualPath);
-        }
-        else {
-            QMessageBox::warning(this, "错误", "缺少文件名参数");
-        }
-    }
     else if (tokens[0] == "read") {
         if (tokens.size() > 1) {
             std::string relativePath = tokens[1];
@@ -436,12 +412,45 @@ void FileMainWindow::handleCommand(const std::string& command) {
             }
             std::string content = readFileContent(fullVirtualPath);
             if (!content.empty()) {
-                FileContentView* view = new FileContentView(relativePath, content);
+                // 传递false参数，表示只读模式
+                FileContentView* view = new FileContentView(relativePath, content, false);
                 view->show();
             }
             else {
-                QMessageBox::warning(this, "错误", "文件读取失败");
+                QMessageBox::warning(this, "错误", "文件为空");
             }
+        }
+        else {
+            QMessageBox::warning(this, "错误", "缺少文件名参数");
+        }
+    }
+    else if (tokens[0] == "write") {
+        if (tokens.size() > 1) {
+            std::string relativePath = tokens[1];
+            std::string fullVirtualPath;
+            if (relativePath[0] == '/') {
+                fullVirtualPath = relativePath;
+            }
+            else {
+                fullVirtualPath = config.currentPath + (config.currentPath.back() == '/' ? "" : "/") + relativePath;
+            }
+
+            // 读取现有文件内容
+            std::string content = readFileContent(fullVirtualPath);
+
+            // 打开编辑窗口
+            // 传递true参数，表示可编辑模式
+            FileContentView* editor = new FileContentView(relativePath, content, true);
+            connect(editor, &FileContentView::contentSaved, [=](const std::string& newContent) {
+                // 保存修改后的内容
+                if (writeFileContent(fullVirtualPath, newContent)) {
+                    QMessageBox::information(this, "成功", "文件保存成功");
+                }
+                else {
+                    QMessageBox::warning(this, "错误", "文件保存失败");
+                }
+                });
+            editor->show();
         }
         else {
             QMessageBox::warning(this, "错误", "缺少文件名参数");
@@ -495,4 +504,22 @@ void FileMainWindow::handleCommand(const std::string& command) {
 // 处理文件系统变化事件
 void FileMainWindow::onDirectoryChanged(const QString& path) {
     updateDirectoryView();
+}
+
+bool FileMainWindow::writeFileContent(const std::string& path, const std::string& content) {
+    std::string fullPath = getFullPath(path);
+    QFile file(QString::fromStdString(fullPath));
+    if (file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QTextStream out(&file);
+        out << QString::fromStdString(content);
+        file.close();
+
+        // 更新 inode 中的文件大小和修改时间
+        Inode inode = loadInode(path);
+        inode.size = content.size();
+        inode.modifyTime = QDateTime::currentDateTime();
+        saveInode(path, inode);
+        return true;
+    }
+    return false;
 }
