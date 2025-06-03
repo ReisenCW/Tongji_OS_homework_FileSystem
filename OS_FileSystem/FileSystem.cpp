@@ -81,6 +81,15 @@ bool deleteItem(const std::string& path) {
     else {
         QFile file(QString::fromStdString(fullPath));
         if (file.remove()) {
+            // 删除对应的 inode 文件
+            std::string inodePath = config.realRootPath + "/inode/" + getFullPath(path).substr(config.realRootPath.length()) + ".inode";
+            QFile inodeFile(QString::fromStdString(inodePath));
+            if (inodeFile.exists()) {
+                if (!inodeFile.remove()) {
+                    std::cerr << "Failed to remove inode file: " << inodePath << std::endl;
+                }
+            }
+
             // 释放物理块
             Inode inode = loadInode(path);
             int block = inode.firstBlock;

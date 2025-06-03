@@ -3,6 +3,7 @@
 #include <vector>
 #include <fstream>
 #include <QDir>
+#include <iostream>
 
 // 定义并初始化全局的 config 变量
 Config config;
@@ -80,8 +81,21 @@ Inode loadInode(const std::string& path) {
     std::string inodePath = config.realRootPath + "/inode/" + getFullPath(path).substr(config.realRootPath.length()) + ".inode";
     std::ifstream inodeFile(inodePath, std::ios::binary);
     if (inodeFile) {
-        inodeFile.read(reinterpret_cast<char*>(&inode), sizeof(Inode));
-        inodeFile.close();
+        // 检查文件大小
+        inodeFile.seekg(0, std::ios::end);
+        std::streamsize size = inodeFile.tellg();
+        inodeFile.seekg(0, std::ios::beg);
+
+        if (size == sizeof(Inode)) {
+            inodeFile.read(reinterpret_cast<char*>(&inode), sizeof(Inode));
+            inodeFile.close();
+        }
+        else {
+            std::cerr << "Inode file size is incorrect: " << inodePath << std::endl;
+        }
+    }
+    else {
+        std::cerr << "Failed to open inode file: " << inodePath << std::endl;
     }
     return inode;
 }
