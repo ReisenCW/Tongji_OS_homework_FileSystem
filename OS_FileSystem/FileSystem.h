@@ -1,10 +1,7 @@
 ﻿#pragma once
 #include "Utilities.h"
 #include <fstream>
-
-// 全局的FAT表和位图
-extern FAT fat;
-extern Bitmap bitmap;
+#include <Utilities.h>
 
 // 格式化文件系统
 void formatFileSystem();

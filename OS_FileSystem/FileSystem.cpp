@@ -44,9 +44,15 @@ bool createFile(const std::string& path) {
         if (block != -1) {
             // 更新位图
             bitmap.set(block);
-            // 更新 FAT 表
-            fat[block] = -1;
-            // 保存文件信息
+            if (block < fat.size()) { // 额外检查 vector 边界
+                fat[block] = -1;
+            }
+            else {
+                std::cerr << "FAT table out of range for block: " << block << std::endl;
+                file.close();
+                return false;
+            }
+            // 保存 inode...
             Inode inode;
             inode.firstBlock = block;
             inode.size = 0;
@@ -55,7 +61,11 @@ bool createFile(const std::string& path) {
             saveInode(path, inode);
             return true;
         }
+    }
+    else {
+        std::cerr << "No free blocks available" << std::endl;
         file.close();
+        return false; // 明确处理无块情况
     }
     return false;
 }
