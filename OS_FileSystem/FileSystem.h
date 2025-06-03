@@ -27,3 +27,5 @@ bool openFileForEdit(const std::string& path);
 // 读取文件内容
 std::string readFileContent(const std::string& path);
 
+// 重命名文件/目录
+bool renameItem(const std::string& oldPath, const std::string& newPath);

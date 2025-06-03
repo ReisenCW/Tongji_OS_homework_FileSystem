@@ -138,3 +138,20 @@ std::string readFileContent(const std::string& path) {
     return "";
 }
 
+bool renameItem(const std::string& oldPath, const std::string& newPath) {
+    std::string oldFullPath = getFullPath(oldPath);
+    std::string newFullPath = getFullPath(newPath);
+    QFile file(QString::fromStdString(oldFullPath));
+    if (file.rename(QString::fromStdString(newFullPath))) {
+        // 重命名inode文件
+        std::string oldInodePath = oldFullPath + ".inode";
+        std::string newInodePath = newFullPath + ".inode";
+        QFile inodeFile(QString::fromStdString(oldInodePath));
+        //if (inodeFile.rename(QString::fromStdString(newInodePath))) {
+        //    return true;
+        //}
+        return true;
+    }
+    return false;
+}
+

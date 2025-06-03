@@ -394,6 +394,48 @@ void FileMainWindow::handleCommand(const std::string& command) {
             QMessageBox::warning(this, "错误", "缺少文件名参数");
         }
     }
+    else if (tokens[0] == "rename") {
+        if (tokens.size() > 2) {
+            std::string oldRelativePath = tokens[1];
+            std::string newRelativePath = tokens[2];
+            std::string oldFullVirtualPath;
+            std::string newFullVirtualPath;
+
+            if (oldRelativePath[0] == '/') {
+                oldFullVirtualPath = oldRelativePath;
+            }
+            else {
+                if (config.currentPath.back() == '/') {
+                    oldFullVirtualPath = config.currentPath + oldRelativePath;
+                }
+                else {
+                    oldFullVirtualPath = config.currentPath + "/" + oldRelativePath;
+                }
+            }
+
+            if (newRelativePath[0] == '/') {
+                newFullVirtualPath = newRelativePath;
+            }
+            else {
+                if (config.currentPath.back() == '/') {
+                    newFullVirtualPath = config.currentPath + newRelativePath;
+                }
+                else {
+                    newFullVirtualPath = config.currentPath + "/" + newRelativePath;
+                }
+            }
+
+            if (renameItem(oldFullVirtualPath, newFullVirtualPath)) {
+                QMessageBox::information(this, "成功", "文件/目录重命名成功");
+            }
+            else {
+                QMessageBox::warning(this, "错误", "文件/目录重命名失败");
+            }
+        }
+        else {
+            QMessageBox::warning(this, "错误", "缺少文件名参数");
+        }
+    }
 }
 
 
