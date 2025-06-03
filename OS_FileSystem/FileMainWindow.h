@@ -4,7 +4,7 @@
 #include <QLineEdit>
 #include <QTreeWidget>
 #include <QTreeWidgetItem>
-#include <QFileSystemWatcher> // 添加头文件
+#include <QFileSystemWatcher> 
 #include "ui_FileMainWindow.h"
 #include "Utilities.h"
 

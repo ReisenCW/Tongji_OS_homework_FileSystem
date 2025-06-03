@@ -72,13 +72,61 @@ void FileMainWindow::InitWidget()
     currentPathEdit = new QLineEdit(centralWidget);
     currentPathEdit->setReadOnly(true);
     currentPathEdit->setText(QString::fromStdString(config.currentPath));
+    // 大一点
+	currentPathEdit->setMinimumHeight(40);
     rightLayout->addWidget(currentPathEdit);
 
     // 命令输入框
     commandInput = new QLineEdit(centralWidget);
     commandInput->setPlaceholderText("输入命令...");
+	commandInput->setMinimumHeight(40);
     connect(commandInput, &QLineEdit::returnPressed, this, &FileMainWindow::on_commandInput_returnPressed);
     rightLayout->addWidget(commandInput);
+
+    // 快捷按钮区域
+    QHBoxLayout* shortcutButtonLayout = new QHBoxLayout();
+    shortcutButtonLayout->setSpacing(10);
+    shortcutButtonLayout->setContentsMargins(0, 0, 0, 0);
+
+    QPushButton* mkdirButton = new QPushButton("创建文件夹", centralWidget);
+    QPushButton* touchButton = new QPushButton("创建文件", centralWidget);
+    QPushButton* rmButton = new QPushButton("删除", centralWidget);
+    QPushButton* writeButton = new QPushButton("编辑文件", centralWidget);
+    QPushButton* readButton = new QPushButton("读文件", centralWidget);
+    QPushButton* renameButton = new QPushButton("重命名", centralWidget);
+	QPushButton* clearButton = new QPushButton("清空输入", centralWidget);
+
+    connect(mkdirButton, &QPushButton::clicked, [=]() {
+        commandInput->setText("mkdir new_dir");
+    });
+    connect(touchButton, &QPushButton::clicked, [=]() {
+        commandInput->setText("touch new_file");
+    });
+    connect(rmButton, &QPushButton::clicked, [=]() {
+        commandInput->setText("rm file_to_delete");
+    });
+    connect(writeButton, &QPushButton::clicked, [=]() {
+        commandInput->setText("write file_to_edit");
+    });
+    connect(readButton, &QPushButton::clicked, [=]() {
+        commandInput->setText("read file_to_read");
+    });
+    connect(renameButton, &QPushButton::clicked, [=]() {
+        commandInput->setText("rename o_name n_name");
+    });
+	connect(clearButton, &QPushButton::clicked, [=]() {
+		commandInput->clear();
+	});
+
+    shortcutButtonLayout->addWidget(mkdirButton);
+    shortcutButtonLayout->addWidget(touchButton);
+    shortcutButtonLayout->addWidget(rmButton);
+    shortcutButtonLayout->addWidget(writeButton);
+    shortcutButtonLayout->addWidget(readButton);
+    shortcutButtonLayout->addWidget(renameButton);
+	shortcutButtonLayout->addWidget(clearButton);
+
+    rightLayout->addLayout(shortcutButtonLayout);
 
     // 确认和退出按钮
     QHBoxLayout* buttonLayout = new QHBoxLayout();
