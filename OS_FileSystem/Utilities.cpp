@@ -71,13 +71,19 @@ void saveInode(const std::string& path, const Inode& inode) {
     std::ofstream inodeFile(inodePath, std::ios::binary);
     if (inodeFile) {
         inodeFile.write(reinterpret_cast<const char*>(&inode), sizeof(Inode));
+        if (!inodeFile) {
+            std::cerr << "Failed to write inode file: " << inodePath << std::endl;
+        }
         inodeFile.close();
+    }
+    else {
+        std::cerr << "Failed to open inode file for writing: " << inodePath << std::endl;
     }
 }
 
 // 从磁盘加载索引节点信息
 Inode loadInode(const std::string& path) {
-    Inode inode;
+    Inode inode = { -1, 0, QDateTime(), QDateTime() }; // 默认初始化
     std::string inodePath = config.realRootPath + "/inode/" + getFullPath(path).substr(config.realRootPath.length()) + ".inode";
     std::ifstream inodeFile(inodePath, std::ios::binary);
     if (inodeFile) {
@@ -88,14 +94,18 @@ Inode loadInode(const std::string& path) {
 
         if (size == sizeof(Inode)) {
             inodeFile.read(reinterpret_cast<char*>(&inode), sizeof(Inode));
-            inodeFile.close();
+            if (inodeFile.gcount() != sizeof(Inode)) {
+                std::cerr << "Failed to read inode file: " << inodePath << std::endl;
+            }
         }
         else {
             std::cerr << "Inode file size is incorrect: " << inodePath << std::endl;
         }
+        inodeFile.close();
     }
     else {
         std::cerr << "Failed to open inode file: " << inodePath << std::endl;
     }
     return inode;
 }
+

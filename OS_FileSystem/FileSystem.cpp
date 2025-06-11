@@ -44,7 +44,8 @@ bool createFile(const std::string& path) {
             bitmap.set(block);
             if (block < fat.size()) {
                 fat[block] = -1;
-            } else {
+            }
+            else {
                 std::cerr << "FAT table out of range for block: " << block << std::endl;
                 file.close();
                 return false;
@@ -71,32 +72,31 @@ bool deleteItem(const std::string& path) {
         return dir.removeRecursively();
     }
     else {
-        QFile file(QString::fromStdString(fullPath));
-        if (file.remove()) {
-            // 删除对应的 inode 文件
-            std::string inodePath = config.realRootPath + "/inode/" + getFullPath(path).substr(config.realRootPath.length()) + ".inode";
-            QFile inodeFile(QString::fromStdString(inodePath));
-            if (inodeFile.exists()) {
-                if (!inodeFile.remove()) {
-                    std::cerr << "Failed to remove inode file: " << inodePath << std::endl;
-                }
-            }
+        // 先加载 inode 信息
+        Inode inode = loadInode(path);
 
+		QFile file(QString::fromStdString(fullPath));
+        if (file.remove()) {
             // 释放物理块
-            Inode inode = loadInode(path);
             int block = inode.firstBlock;
-            while (block != -1) {
+            while (block != -1 && block < BLOCK_COUNT) {
                 int nextBlock = fat[block];
-                // 更新位图
                 bitmap.reset(block);
-                // 更新 FAT 表
                 fat[block] = -1;
                 block = nextBlock;
             }
+
+            // 删除对应的 inode 文件
+            std::string inodePath = config.realRootPath + "/inode/" +
+                getFullPath(path).substr(config.realRootPath.length()) + ".inode";
+            QFile inodeFile(QString::fromStdString(inodePath));
+            if (inodeFile.exists() && !inodeFile.remove()) {
+                std::cerr << "Failed to remove inode file: " << inodePath << std::endl;
+            }
             return true;
         }
+        return false;
     }
-    return false;
 }
 
 // 获取目录信息
@@ -113,7 +113,19 @@ Directory getDirectoryInfo(const std::string& path) {
             FileItem item;
             item.name = fileInfo.fileName().toStdString();
             item.type = fileInfo.isDir() ? FileType::Directory : FileType::File;
-            item.size = fileInfo.size();
+            if (item.type == FileType::Directory) {
+                // 递归计算文件夹大小
+                QDir subDir(fileInfo.absoluteFilePath());
+                QFileInfoList subFileList = subDir.entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot);
+                qint64 totalSize = 0;
+                for (const auto& subFileInfo : subFileList) {
+                    totalSize += subFileInfo.size();
+                }
+                item.size = totalSize;
+            }
+            else {
+                item.size = fileInfo.size();
+            }
             item.createTime = fileInfo.birthTime();
             item.modifyTime = fileInfo.lastModified();
             item.inode = -1;
@@ -154,6 +166,11 @@ bool renameItem(const std::string& oldPath, const std::string& newPath) {
     std::string newFullPath = getFullPath(newPath);
     QFile file(QString::fromStdString(oldFullPath));
     if (file.rename(QString::fromStdString(newFullPath))) {
+        // 判断是文件还是文件夹，如果是文件夹，则直接return true,无需处理inode
+        QFileInfo fileInfo(QString::fromStdString(newFullPath));
+        if (fileInfo.isDir()) {
+            return true;
+        }
         // 重命名inode文件
         std::string oldInodePath = config.realRootPath + "/inode/" + getFullPath(oldPath).substr(config.realRootPath.length()) + ".inode";
         std::string newInodePath = config.realRootPath + "/inode/" + getFullPath(newPath).substr(config.realRootPath.length()) + ".inode";

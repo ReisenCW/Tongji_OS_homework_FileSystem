@@ -40,6 +40,5 @@ std::string FileContentView::getContent() const {
 
 void FileContentView::saveContent() {
     emit contentSaved(getContent()); 
-    QMessageBox::information(this, "成功", "文件内容已保存");
     close();
 }

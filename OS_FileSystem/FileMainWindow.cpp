@@ -266,11 +266,17 @@ void FileMainWindow::handleCommand(const std::string& command) {
                     fullVirtualPath = config.currentPath + "/" + relativePath;
                 }
             }
-            if (createDirectory(fullVirtualPath)) {
-                QMessageBox::information(this, "成功", "目录创建成功");
-            }
+            // 查看是否存在同名文件夹，有的话提示用户，并不创建
+			if (QDir(QString::fromStdString(getFullPath(fullVirtualPath))).exists()) {
+				QMessageBox::warning(this, "提示", "该目录已存在");
+			}
             else {
-                QMessageBox::warning(this, "错误", "目录创建失败");
+                if (createDirectory(fullVirtualPath)) {
+                    QMessageBox::information(this, "成功", "目录创建成功");
+                }
+                else {
+                    QMessageBox::warning(this, "错误", "目录创建失败");
+                }
             }
         }
         else {
@@ -358,11 +364,17 @@ void FileMainWindow::handleCommand(const std::string& command) {
                     fullVirtualPath = config.currentPath + "/" + relativePath;
                 }
             }
-            if (createFile(fullVirtualPath)) {
-                QMessageBox::information(this, "成功", "文件创建成功");
-            }
+			// 查看是否存在同名文件，有的话提示用户，并不创建
+			if (QFile::exists(QString::fromStdString(getFullPath(fullVirtualPath)))) {
+				QMessageBox::warning(this, "提示", "该文件已存在");
+			}
             else {
-                QMessageBox::warning(this, "错误", "文件创建失败");
+                if (createFile(fullVirtualPath)) {
+                    QMessageBox::information(this, "成功", "文件创建成功");
+                }
+                else {
+                    QMessageBox::warning(this, "错误", "文件创建失败");
+                }
             }
         }
         else {
@@ -445,6 +457,12 @@ void FileMainWindow::handleCommand(const std::string& command) {
                 // 保存修改后的内容
                 if (writeFileContent(fullVirtualPath, newContent)) {
                     QMessageBox::information(this, "成功", "文件保存成功");
+					// 更新 inode 信息
+					Inode inode = loadInode(relativePath);
+					inode.size = newContent.size();
+					inode.modifyTime = QDateTime::currentDateTime();
+					saveInode(relativePath, inode);
+					updateDirectoryView(); // 更新目录视图
                 }
                 else {
                     QMessageBox::warning(this, "错误", "文件保存失败");
